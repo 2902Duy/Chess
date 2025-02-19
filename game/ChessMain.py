@@ -1,4 +1,5 @@
 import os
+from calendar import month
 from tkinter.font import names
 
 import pygame as p
@@ -28,12 +29,43 @@ def main():
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
     gs = ChessEngine.GameState()
+    validMoves=gs.getValidMoves()
+    moveMade =False
     loadImage()
     running=True
+    sqSelected=()
+    playerClicks=[]
     while running:
         for e in p.event.get():
             if e.type ==p.QUIT:
                 running=False
+            elif e.type== p.MOUSEBUTTONDOWN:
+                location = p.mouse.get_pos()
+                col=location[0]//SQUARE_SIZE
+                row=location[1]//SQUARE_SIZE
+                if sqSelected==(row,col):
+                    sqSelected = ()
+                    playerClicks = []
+                else:
+                    sqSelected=(row,col)
+                    playerClicks.append(sqSelected)
+                if len(playerClicks)==2:
+                    move = ChessEngine.Move(playerClicks[0],playerClicks[1],gs.board)
+                    print(move.getChessNotation())
+                    if move in validMoves:
+                        gs.makeMove(move)
+                        moveMade=True
+                        sqSelected=()
+                        playerClicks = []
+                    else:
+                        playerClicks= [sqSelected]
+            elif e.type==p.KEYDOWN:
+                if e.key ==p.K_z:
+                    gs.undoMove()
+                    moveMade = True
+        if moveMade:
+            validMoves= gs.getValidMoves()
+            moveMade=False
         drawGameState(screen,gs)
         clock.tick(MAX_FPS)
         p.display.flip()
