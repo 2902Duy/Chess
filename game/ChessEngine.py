@@ -18,12 +18,19 @@ class GameState():
                             'Q':self.getQueenMoves,'K':self.getKingMoves}
         self.whiteToMove = True
         self.movelog = []
+        self.whiteKingLocation=(7,4)
+        self.blackKingLocation=(0,4)
 
     def makeMove(self,move):
         self.board[move.startRow][move.startCol]="__"
         self.board[move.endRow][move.endCol]=move.pieceMove
         self.movelog.append(move)
         self.whiteToMove =not self.whiteToMove
+        #update king location
+        if move.pieceMove == 'wK':
+            self.whiteKingLocation = (move.endRow,move.endCol)
+        elif move.pieceMove == 'bK':
+            self.blackKingLocation = (move.endRow, move.endCol)
 
     def undoMove(self):
         if len(self.movelog)!=0:
@@ -31,22 +38,65 @@ class GameState():
             self.board[move.startRow][move.startCol]= move.pieceMove
             self.board[move.endRow][move.endCol]= move.pieceCaptured
             self.whiteToMove = not self.whiteToMove
+            if move.pieceMove == 'wK':
+                self.whiteKingLocation=(move.startRow,move.startCol)
+            elif move.pieceMove == 'bK':
+                self.blackKingLocation = (move.startRow, move.startCol)
 
     """
     All move valid
     """
+
     def getValidMoves(self):
-        return self.getAllPossibleMove()
+        moves = self.getAllPossibleMove()
+        valid_moves = []
+        for move in moves:
+            self.makeMove(move)
+            self.whiteToMove = not self.whiteToMove  # Đảo lượt chơi để kiểm tra
+            if not self.incheck():  # Nếu vua không bị chiếu, thêm nước đi vào danh sách hợp lệ
+                valid_moves.append(move)
+            self.whiteToMove = not self.whiteToMove  # Khôi phục lượt chơi
+            self.undoMove()  # Hoàn tác nước đi thử nghiệm
+
+        if len(valid_moves) == 0:
+            if self.incheck():
+                print("Chiếu tướng!")
+                self.checkMate = True
+            else:
+                print("Hết cờ!")
+                self.staleMate = True
+        else:
+            self.checkMate = False
+            self.staleMate = False
+
+        return valid_moves
+
+    def incheck(self):
+        kingPos = self.whiteKingLocation if self.whiteToMove else self.blackKingLocation
+        return self.squareUnderAttack(kingPos[0], kingPos[1])
+
+    def squareUnderAttack(self, r, c):
+        self.whiteToMove = not self.whiteToMove
+        oppMoves = self.getAllPossibleMove()
+        self.whiteToMove = not self.whiteToMove
+
+        # Kiểm tra xem có quân nào tấn công ô (r, c) không
+        for move in oppMoves:
+            if move.endRow == r and move.endCol == c:
+                return True
+
+        return False  # Không có quân nào tấn công ô (r, c)
 
     def getAllPossibleMove(self):
-        moves =[]
+        moves = []
         for r in range(len(self.board)):
-            for c in range(len(self.board)):
-                turn =self.board[r][c][0]
-                if(turn=='w' and self.whiteToMove) or (turn=='b'and not self.whiteToMove):
+            for c in range(len(self.board[r])):
+                turn = self.board[r][c][0]
+                if (turn == 'w' and self.whiteToMove) or (turn == 'b' and not self.whiteToMove):
                     piece = self.board[r][c][1]
-                    self.moveFunction[piece](r,c,moves)
+                    self.moveFunction[piece](r, c, moves)
         return moves
+
     def getPawnMoves(self,r,c,moves):
         if self.whiteToMove:
             if self.board[r-1][c]=="__":
@@ -119,6 +169,7 @@ class GameState():
                         break
                 else:
                     break
+
     def getQueenMoves(self,r,c,moves):
         directions = ((-1, 0), (0, -1), (1, 0), (0, 1),(-1, -1),(-1, 1),(1, 1),(1, -1))
         enemyColor = 'b' if self.whiteToMove else 'w'
@@ -137,6 +188,7 @@ class GameState():
                         break
                 else:
                     break
+
     def getKingMoves(self,r,c,moves):
         directions = ((-1, 0), (0, -1), (1, 0), (0, 1), (-1, -1), (-1, 1), (1, 1), (1, -1))
         allyColor = 'w' if self.whiteToMove else 'b'
