@@ -55,6 +55,7 @@ def main():
                     if move in validMoves:
                         player = "white" if gs.whiteToMove else "black"
                         print(player + ":" + move.getChessNotation())
+
                         gs.makeMove(move)
                         moveMade=True
                         sqSelected=()
@@ -75,8 +76,10 @@ def main():
 
 def drawGameState(screen,gs,validMoves, sqSelected):
     drawBoard(screen)
+
     highlightSquares(screen, gs, validMoves, sqSelected)
     drawPieces(screen,gs.board)
+
 
 def highlightSquares(screen, gs, validMoves, sqSelected):
     if sqSelected != ():  # Kiểm tra nếu đã chọn ô
@@ -89,7 +92,7 @@ def highlightSquares(screen, gs, validMoves, sqSelected):
             screen.blit(s, (c * SQUARE_SIZE, r * SQUARE_SIZE))
 
             # Kiểm tra nếu đang bị chiếu
-            inCheck = gs.incheck()
+            inCheck = gs.inCheck()
 
             for move in validMoves:
                 if move.startRow == r and move.startCol == c:
@@ -135,7 +138,10 @@ def drawPieces(screen,board):
         for col in range(DIMENSION):
             piece = board[row][col]
             if piece != '__':
+
                 screen.blit(IMAGES[piece],p.Rect(col*SQUARE_SIZE,row*SQUARE_SIZE,SQUARE_SIZE,SQUARE_SIZE))
+
+
 
 if __name__ =="__main__":
     main()
